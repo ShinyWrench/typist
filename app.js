@@ -3,18 +3,11 @@ const { promisify } = require('util');
 const redis = require('redis');
 const express = require('express');
 const WebSocket = require('ws');
-const Board = require('./board');
+const Board = require('./public/js/board');
 
 client = redis.createClient();
 
-const app = express();
-const port = argv.port || 3000;
-
 const constants = {
-    myIPAndPort: {
-        ipAddress: 'localhost',
-        port: port,
-    },
     redisAsync: {
         hsetAsync: promisify(client.hset).bind(client),
         incrbyAsync: promisify(client.incrby).bind(client),
@@ -22,6 +15,11 @@ const constants = {
         zadd: promisify(client.zadd).bind(client),
     },
 };
+
+const board = new Board(35, 10);
+
+const app = express();
+const port = argv.port || 3000;
 
 const wss = new WebSocket.Server({ port: 8080 });
 
@@ -39,5 +37,4 @@ app.listen(port, async () => {
     console.log(`Listening on port ${port}`);
 });
 
-let board = new Board(35, 10);
-board.print();
+console.log(board.print());

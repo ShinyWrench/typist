@@ -23,17 +23,17 @@ class Board {
         this.board = Board.buildBoard(numRows, numCols);
     }
 
-    print() {
+    print(space = ' ', lineBreak = '\n') {
         let output = '';
         this.board.forEach((row) => {
             output += '|';
             row.forEach((letter) => {
-                output += `  ${letter}`;
+                output += `${space.repeat(2)}${letter}`;
             });
-            output += '  |\n';
-            output += `|${' '.repeat(3 * row.length + 2)}|\n`;
+            output += `${space.repeat(2)}|${lineBreak}`;
+            output += `|${space.repeat(3 * row.length + 2)}|${lineBreak}`;
         });
-        console.log(output);
+        return output;
     }
 }
 
