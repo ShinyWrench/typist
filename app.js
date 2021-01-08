@@ -22,9 +22,11 @@ const constants = {
     },
 };
 
-// app.listen(port, async () => {
-//     console.log(`Listening on port ${port}`);
-// });
+app.use(express.static('public'));
+
+app.listen(port, async () => {
+    console.log(`Listening on port ${port}`);
+});
 
 let board = new Board(35, 10);
 board.print();
