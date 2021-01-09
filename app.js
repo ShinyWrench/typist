@@ -13,20 +13,18 @@ const wsClients = [];
 
 wss.on('connection', (client) => {
     wsClients.push(client);
-    ws.on('message', (message) => {
+    client.on('message', (message) => {
         console.log('received: %s', message);
         board.handleClientCommand(message);
     });
-
-    ws.send('something');
 });
 
-// setInterval(async () => {
-//     let renderedBoard = await board.getRendered();
-//     wsClients.forEach((client) => {
-//         client.send(renderedBoard);
-//     });
-// }, 25);
+setInterval(async () => {
+    let renderedBoard = await board.getRendered();
+    wsClients.forEach((client) => {
+        client.send(renderedBoard);
+    });
+}, 25);
 
 app.use(express.static('public'));
 
