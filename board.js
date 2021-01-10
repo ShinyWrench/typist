@@ -42,6 +42,11 @@ class Board {
     }
 
     async setRedisWriteLock(newState) {
+        // If setting to true and already true, wait
+        // -- this happens when lock is being used by something else
+        // If setting to false and already false, wait
+        // -- we only set to false at end of block that started with setting to true
+        // -- TODO: log warning in this case (?)
         while (this.redisWriteLock === newState) {
             await Board.sleep_ms(3);
         }
@@ -73,21 +78,46 @@ class Board {
     }
 
     async getRendered() {
+        // Get raw board content from redis
         let storedCopy = await this.getBoardContent();
+
+        // Split content into array of rows
         let storedCopyRows = storedCopy.split('\n');
+
+        // Build the rendered html
         let rendered = '';
         for (let iRow = 0; iRow < storedCopyRows.length; iRow++) {
+            // Add spaces
             rendered += storedCopyRows[iRow].split('').join('&nbsp;&nbsp;');
+
+            // Add line breaks
             if (iRow < storedCopyRows.length - 1) {
                 rendered += '<br><br>';
             }
+
+            // Highlight the players
+            for (let id = 2; id < 10; id++) {
+                rendered = rendered.replace(
+                    new RegExp(`${id}`, 'g'),
+                    `<span style='background-color: yellow'>${id}</span>`
+                );
+            }
         }
+
         return rendered;
     }
 
-    handleClientCommand() {
+    async handleClientCommand(message) {
+        await this.setRedisWriteLock(true);
+        let storedCopy = await this.getBoardContent();
+
         // TODO
-        // if()
+        switch (message.data) {
+            case 'ArrowUp':
+                break;
+        }
+
+        await this.setRedisWriteLock(false);
     }
 
     async print() {

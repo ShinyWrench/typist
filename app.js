@@ -14,9 +14,9 @@ const wsClients = [];
 wss.on('connection', async (client) => {
     let playerNumber = wsClients.length + 2;
     await board.placeNewPlayer(playerNumber);
-    client.on('message', (message) => {
+    client.on('message', async (message) => {
         console.log('received: %s', message);
-        board.handleClientCommand(message);
+        await board.handleClientCommand(message);
     });
     wsClients.push(client);
 });

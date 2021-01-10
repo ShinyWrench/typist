@@ -11,22 +11,9 @@ $(document).ready(() => {
         } else {
             console.log('no change');
         }
-        // webSocket.send('hey there');
     };
 
     $(document).keydown((event) => {
-        console.log(event);
-        switch (event.key) {
-            case 'ArrowUp':
-                break;
-            case 'ArrowDown':
-                break;
-            case 'ArrowLeft':
-                break;
-            case 'ArrowRight':
-                break;
-            default:
-                break;
-        }
+        webSocket.send(event.key);
     });
 });
