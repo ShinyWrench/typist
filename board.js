@@ -107,14 +107,79 @@ class Board {
         return rendered;
     }
 
-    async handleClientCommand(message) {
+    async handleClientCommand(command, playerNumber) {
         await this.setRedisWriteLock(true);
+
+        // Get the raw board string from redis
         let storedCopy = await this.getBoardContent();
 
-        // TODO
-        switch (message.data) {
-            case 'ArrowUp':
+        // Locate the player on the board
+        let playerIndex = storedCopy.indexOf(`${playerNumber}`);
+        let playerRow = Math.floor(playerIndex / (this.numCols + 1));
+        let playerCol = Math.floor(playerIndex % (this.numCols + 1));
+
+        console.log(
+            `Player ${playerNumber} (at ${playerRow}, ${playerCol}): ${command}`
+        );
+
+        // Convert the raw board to a 2D array
+        let boardArrays = [];
+        storedCopy.split('\n').forEach((row) => {
+            boardArrays.push(row.split(''));
+        });
+
+        let moveFound = false;
+
+        // Check adjacent squares for character that matches command
+        for (let dRow = -1; dRow <= 1; dRow++) {
+            if (moveFound === true) {
                 break;
+            }
+            for (let dCol = -1; dCol <= 1; dCol++) {
+                // Skip current position
+                if (dRow === 0 && dCol === 0) {
+                    continue;
+                }
+
+                // Skip out-of-bounds positions
+                if (
+                    playerRow + dRow < 0 ||
+                    playerRow + dRow > this.numRows - 1 ||
+                    playerCol + dCol < 0 ||
+                    playerCol + dCol > this.numRows
+                ) {
+                    continue;
+                }
+
+                //  Move to position if command matches character there
+                if (
+                    command === boardArrays[playerRow + dRow][playerCol + dCol]
+                ) {
+                    // Write player number in new position
+                    boardArrays[playerRow + dRow][
+                        playerCol + dCol
+                    ] = `${playerNumber}`;
+
+                    // Write '-' in old position
+                    boardArrays[playerRow][playerCol] = '-';
+
+                    // Convert the board back to a single string
+                    let boardContent = '';
+                    for (let iRow = 0; iRow < this.numRows; iRow++) {
+                        boardContent += boardArrays[iRow].join('');
+                        if (iRow < this.numRows - 1) {
+                            boardContent += '\n';
+                        }
+                    }
+
+                    // Store the raw board string back into redis
+                    this.redisAsync.set('board', boardContent);
+
+                    // Set the flag and break so we don't keep checking adjacent squares
+                    moveFound = true;
+                    break;
+                }
+            }
         }
 
         await this.setRedisWriteLock(false);
