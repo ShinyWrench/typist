@@ -11,12 +11,14 @@ const port = argv.port || 3000;
 const wss = new WebSocket.Server({ port: 8080 });
 const wsClients = [];
 
-wss.on('connection', (client) => {
-    wsClients.push(client);
+wss.on('connection', async (client) => {
+    let playerNumber = wsClients.length + 2;
+    await board.placeNewPlayer(playerNumber);
     client.on('message', (message) => {
         console.log('received: %s', message);
         board.handleClientCommand(message);
     });
+    wsClients.push(client);
 });
 
 setInterval(async () => {
