@@ -2,16 +2,53 @@ const RedisAsync = require('./redisAsync');
 
 class Board {
     static buildNewBoardContent(numRows, numCols) {
-        let output = '';
+        const checkIfUniqueOffsets = [
+            [-2, -2],
+            [-2, -1],
+            [-2, -0],
+            [-2, 1],
+            [-2, 2],
+            [-1, -2],
+            [-1, -1],
+            [-1, -0],
+            [-1, 1],
+            [-1, 2],
+            [0, -2],
+            [0, -1],
+        ];
+
+        let rows = [];
         for (let iRow = 0; iRow < numRows; iRow++) {
+            rows.push('');
             for (let iCol = 0; iCol < numCols; iCol++) {
-                output += this.randomLetter();
-            }
-            if (iRow < numRows - 1) {
-                output += '\n';
+                let nextLetter = null;
+                while (!nextLetter) {
+                    nextLetter = Board.randomLetter();
+
+                    // Prevent ambiguous commands by assuring all squares have
+                    // uniqueness vs. all adjacent squares and all adjacent squares
+                    // have uniqueness vs. each other
+                    for (
+                        let iOffset = 0;
+                        iOffset < checkIfUniqueOffsets.length;
+                        iOffset++
+                    ) {
+                        let row = iRow + checkIfUniqueOffsets[iOffset][0];
+                        let col = iCol + checkIfUniqueOffsets[iOffset][1];
+                        // Make sure we're in bounds
+                        if (row >= 0 && col >= 0 && col < numCols) {
+                            // If letters match, start over with another random letter
+                            if (nextLetter === rows[row][col]) {
+                                nextLetter = null;
+                                break;
+                            }
+                        }
+                    }
+                }
+                rows[iRow] += nextLetter;
             }
         }
-        return output;
+        return rows.join('\n');
     }
 
     static randomLetter() {
