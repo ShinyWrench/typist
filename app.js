@@ -3,7 +3,6 @@ const express = require('express');
 const WebSocket = require('ws');
 const Board = require('./board');
 
-// TODO: letter replace
 // TODO: game logic
 // TODO: scoreboard
 // TODO: client null array

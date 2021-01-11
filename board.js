@@ -19,6 +19,7 @@ class Board {
     constructor(numRows, numCols) {
         this.numRows = numRows;
         this.numCols = numCols;
+        this.playerReplacements = {};
         this.redisAsync = new RedisAsync();
         this.redisWriteLock = false;
         this.redisAsync.connect();
@@ -98,6 +99,7 @@ class Board {
                 break;
             }
         }
+        this.playerReplacements[playerNumber] = storedCopyRows[row][col];
         storedCopyRows[row] = `${storedCopyRows[row].slice(
             0,
             col
@@ -191,13 +193,19 @@ class Board {
                 if (
                     command === boardArrays[playerRow + dRow][playerCol + dCol]
                 ) {
+                    // Replace player with letter they originally replaced
+                    boardArrays[playerRow][playerCol] = this.playerReplacements[
+                        playerNumber
+                    ];
+
+                    // Store letter that player will now replace
+                    this.playerReplacements[playerNumber] =
+                        boardArrays[playerRow + dRow][playerCol + dCol];
+
                     // Write player number in new position
                     boardArrays[playerRow + dRow][
                         playerCol + dCol
                     ] = `${playerNumber}`;
-
-                    // Write '-' in old position
-                    boardArrays[playerRow][playerCol] = '-';
 
                     // Convert the board back to a single string
                     let boardContent = '';
