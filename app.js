@@ -3,6 +3,15 @@ const express = require('express');
 const WebSocket = require('ws');
 const Board = require('./board');
 
+// TODO: letter replace
+// TODO: game logic
+// TODO: scoreboard
+// TODO: client null array
+// TODO: DRY
+// TODO: readme
+// TODO: ...
+// TODO: bots
+
 const board = new Board(35, 10);
 
 const app = express();
