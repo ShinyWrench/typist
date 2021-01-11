@@ -17,6 +17,7 @@ class RedisAsync {
         this.boundFunctions = {
             set: promisify(this.client.set).bind(this.client),
             get: promisify(this.client.get).bind(this.client),
+            zincrby: promisify(this.client.zincrby).bind(this.client),
         };
     }
 
@@ -31,6 +32,10 @@ class RedisAsync {
 
     async get() {
         return this.boundFunctions.get.apply(null, arguments);
+    }
+
+    async zincrby() {
+        return this.boundFunctions.zincrby.apply(null, arguments);
     }
 }
 

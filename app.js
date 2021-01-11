@@ -2,8 +2,8 @@ let argv = require('minimist')(process.argv.slice(2));
 const express = require('express');
 const WebSocket = require('ws');
 const Board = require('./board');
+const constants = require('./constants');
 
-// TODO: game logic
 // TODO: scoreboard
 // TODO: client null array
 // TODO: DRY
@@ -18,7 +18,7 @@ app.use(express.static('public'));
 const wss = new WebSocket.Server({ port: 8080 });
 const wsClients = [];
 
-const board = new Board(35, 10);
+const board = new Board(constants.defaultBoardRows, constants.defaultBoardCols);
 
 board
     .build()
@@ -37,7 +37,7 @@ board
             wsClients.forEach((client) => {
                 client.send(renderedBoard);
             });
-        }, 25);
+        }, constants.sendUpdateInterval_ms);
 
         app.listen(port, async () => {
             console.log(`Listening on port ${port}`);

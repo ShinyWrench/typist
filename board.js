@@ -95,7 +95,7 @@ class Board {
         while (true) {
             row = Math.floor(this.numRows * Math.random());
             col = Math.floor(this.numCols * Math.random());
-            if (!'23456789'.includes(storedCopyRows[row][col])) {
+            if (!constants.playerNumbers.includes(storedCopyRows[row][col])) {
                 break;
             }
         }
@@ -184,7 +184,7 @@ class Board {
                     playerRow + dRow < 0 ||
                     playerRow + dRow > this.numRows - 1 ||
                     playerCol + dCol < 0 ||
-                    playerCol + dCol > this.numRows
+                    playerCol + dCol > this.cols - 1
                 ) {
                     continue;
                 }
@@ -198,9 +198,29 @@ class Board {
                         playerNumber
                     ];
 
-                    // Store letter that player will now replace
-                    this.playerReplacements[playerNumber] =
-                        boardArrays[playerRow + dRow][playerCol + dCol];
+                    // Check if we landed on another player
+                    if (constants.playerNumbers.includes(command)) {
+                        // Increment our score
+                        await this.redisAsync.zincrby(
+                            constants.redis.keys.scoreboard,
+                            1,
+                            playerNumber
+                        );
+
+                        // Copy their replacement letter over ours
+                        this.playerReplacements[
+                            playerNumber
+                        ] = this.playerReplacements[parseInt(command)];
+
+                        // Set a timeout for respawning the other player
+                        setTimeout(async () => {
+                            await this.placeNewPlayer(parseInt(command));
+                        }, constants.respawnTime_ms);
+                    } else {
+                        // Store letter that player will now replace
+                        this.playerReplacements[playerNumber] =
+                            boardArrays[playerRow + dRow][playerCol + dCol];
+                    }
 
                     // Write player number in new position
                     boardArrays[playerRow + dRow][
