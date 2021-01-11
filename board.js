@@ -1,4 +1,5 @@
 const RedisAsync = require('./redisAsync');
+const constants = require('./constants');
 
 class Board {
     static randomLetter() {
@@ -70,7 +71,7 @@ class Board {
                 rows[iRow] += nextLetter;
             }
         }
-        this.redisAsync.set('board', rows.join('\n'));
+        this.redisAsync.set(constants.redis.keys.board, rows.join('\n'));
     }
 
     async setRedisWriteLock(newState) {
@@ -80,7 +81,7 @@ class Board {
         // -- we only set to false at end of block that started with setting to true
         // -- TODO: log warning in this case (?)
         while (this.redisWriteLock === newState) {
-            await Board.sleep_ms(3);
+            await Board.sleep_ms(constants.redis.writeLockSleep_ms);
         }
         this.redisWriteLock = newState;
     }
@@ -101,12 +102,15 @@ class Board {
             0,
             col
         )}${playerNumber}${storedCopyRows[row].slice(col + 1)}`;
-        await this.redisAsync.set('board', storedCopyRows.join('\n'));
+        await this.redisAsync.set(
+            constants.redis.keys.board,
+            storedCopyRows.join('\n')
+        );
         await this.setRedisWriteLock(false);
     }
 
     async getBoardContent() {
-        return await this.redisAsync.get('board');
+        return await this.redisAsync.get(constants.redis.keys.board);
     }
 
     async getRendered() {
@@ -205,7 +209,10 @@ class Board {
                     }
 
                     // Store the raw board string back into redis
-                    await this.redisAsync.set('board', boardContent);
+                    await this.redisAsync.set(
+                        constants.redis.keys.board,
+                        boardContent
+                    );
 
                     // Set the flag and break so we don't keep checking adjacent squares
                     moveFound = true;
