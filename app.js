@@ -12,34 +12,38 @@ const Board = require('./board');
 // TODO: ...
 // TODO: bots
 
-const board = new Board(35, 10);
-
 const app = express();
 const port = argv.port || 3000;
+app.use(express.static('public'));
 
 const wss = new WebSocket.Server({ port: 8080 });
 const wsClients = [];
 
-wss.on('connection', async (client) => {
-    let playerNumber = wsClients.length + 2;
-    await board.placeNewPlayer(playerNumber);
-    client.on('message', async (message) => {
-        await board.handleClientCommand(message, playerNumber);
-    });
-    wsClients.push(client);
-});
+const board = new Board(35, 10);
 
-setInterval(async () => {
-    let renderedBoard = await board.getRendered();
-    wsClients.forEach((client) => {
-        client.send(renderedBoard);
-    });
-}, 25);
+board
+    .build()
+    .then(() => {
+        wss.on('connection', async (client) => {
+            let playerNumber = wsClients.length + 2;
+            await board.placeNewPlayer(playerNumber);
+            client.on('message', async (message) => {
+                await board.handleClientCommand(message, playerNumber);
+            });
+            wsClients.push(client);
+        });
 
-app.use(express.static('public'));
+        setInterval(async () => {
+            let renderedBoard = await board.getRendered();
+            wsClients.forEach((client) => {
+                client.send(renderedBoard);
+            });
+        }, 25);
 
-app.listen(port, async () => {
-    console.log(`Listening on port ${port}`);
-});
+        app.listen(port, async () => {
+            console.log(`Listening on port ${port}`);
+        });
 
-board.print().then(() => {});
+        return board.print();
+    })
+    .then(() => {});

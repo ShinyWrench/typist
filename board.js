@@ -1,56 +1,6 @@
 const RedisAsync = require('./redisAsync');
 
 class Board {
-    static buildNewBoardContent(numRows, numCols) {
-        const checkIfUniqueOffsets = [
-            [-2, -2],
-            [-2, -1],
-            [-2, -0],
-            [-2, 1],
-            [-2, 2],
-            [-1, -2],
-            [-1, -1],
-            [-1, -0],
-            [-1, 1],
-            [-1, 2],
-            [0, -2],
-            [0, -1],
-        ];
-
-        let rows = [];
-        for (let iRow = 0; iRow < numRows; iRow++) {
-            rows.push('');
-            for (let iCol = 0; iCol < numCols; iCol++) {
-                let nextLetter = null;
-                while (!nextLetter) {
-                    nextLetter = Board.randomLetter();
-
-                    // Prevent ambiguous commands by assuring all squares have
-                    // uniqueness vs. all adjacent squares and all adjacent squares
-                    // have uniqueness vs. each other
-                    for (
-                        let iOffset = 0;
-                        iOffset < checkIfUniqueOffsets.length;
-                        iOffset++
-                    ) {
-                        let row = iRow + checkIfUniqueOffsets[iOffset][0];
-                        let col = iCol + checkIfUniqueOffsets[iOffset][1];
-                        // Make sure we're in bounds
-                        if (row >= 0 && col >= 0 && col < numCols) {
-                            // If letters match, start over with another random letter
-                            if (nextLetter === rows[row][col]) {
-                                nextLetter = null;
-                                break;
-                            }
-                        }
-                    }
-                }
-                rows[iRow] += nextLetter;
-            }
-        }
-        return rows.join('\n');
-    }
-
     static randomLetter() {
         let randomNumber = 52 * Math.random();
         let uppercase = Math.floor(randomNumber / 26) > 0;
@@ -70,12 +20,57 @@ class Board {
         this.numCols = numCols;
         this.redisAsync = new RedisAsync();
         this.redisWriteLock = false;
-
         this.redisAsync.connect();
-        this.redisAsync.set(
-            'board',
-            Board.buildNewBoardContent(numRows, numCols)
-        );
+    }
+
+    async build() {
+        const checkIfUniqueOffsets = [
+            [-2, -2],
+            [-2, -1],
+            [-2, -0],
+            [-2, 1],
+            [-2, 2],
+            [-1, -2],
+            [-1, -1],
+            [-1, -0],
+            [-1, 1],
+            [-1, 2],
+            [0, -2],
+            [0, -1],
+        ];
+
+        let rows = [];
+        for (let iRow = 0; iRow < this.numRows; iRow++) {
+            rows.push('');
+            for (let iCol = 0; iCol < this.numCols; iCol++) {
+                let nextLetter = null;
+                while (!nextLetter) {
+                    nextLetter = Board.randomLetter();
+
+                    // Prevent ambiguous commands by assuring all squares have
+                    // uniqueness vs. all adjacent squares and all adjacent squares
+                    // have uniqueness vs. each other
+                    for (
+                        let iOffset = 0;
+                        iOffset < checkIfUniqueOffsets.length;
+                        iOffset++
+                    ) {
+                        let row = iRow + checkIfUniqueOffsets[iOffset][0];
+                        let col = iCol + checkIfUniqueOffsets[iOffset][1];
+                        // Make sure we're in bounds
+                        if (row >= 0 && col >= 0 && col < this.numCols) {
+                            // If letters match, start over with another random letter
+                            if (nextLetter === rows[row][col]) {
+                                nextLetter = null;
+                                break;
+                            }
+                        }
+                    }
+                }
+                rows[iRow] += nextLetter;
+            }
+        }
+        this.redisAsync.set('board', rows.join('\n'));
     }
 
     async setRedisWriteLock(newState) {
@@ -106,7 +101,7 @@ class Board {
             0,
             col
         )}${playerNumber}${storedCopyRows[row].slice(col + 1)}`;
-        this.redisAsync.set('board', storedCopyRows.join('\n'));
+        await this.redisAsync.set('board', storedCopyRows.join('\n'));
         await this.setRedisWriteLock(false);
     }
 
@@ -210,7 +205,7 @@ class Board {
                     }
 
                     // Store the raw board string back into redis
-                    this.redisAsync.set('board', boardContent);
+                    await this.redisAsync.set('board', boardContent);
 
                     // Set the flag and break so we don't keep checking adjacent squares
                     moveFound = true;
