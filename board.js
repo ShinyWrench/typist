@@ -145,6 +145,15 @@ class Board {
         return rendered;
     }
 
+    async getScores() {
+        return await this.redisAsync.zrevrange(
+            constants.redis.keys.scoreboard,
+            0,
+            -1,
+            'withscores'
+        );
+    }
+
     async handleClientCommand(command, playerNumber) {
         await this.setRedisWriteLock(true);
 
@@ -189,7 +198,7 @@ class Board {
                     continue;
                 }
 
-                //  Move to position if command matches character there
+                // Move to position if command matches character there
                 if (
                     command === boardArrays[playerRow + dRow][playerCol + dCol]
                 ) {

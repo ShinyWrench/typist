@@ -33,9 +33,14 @@ board
         });
 
         setInterval(async () => {
+            let scores = await board.getScores();
             let renderedBoard = await board.getRendered();
+            let message = JSON.stringify({
+                board: renderedBoard,
+                scores: scores,
+            });
             wsClients.forEach((client) => {
-                client.send(renderedBoard);
+                client.send(message);
             });
         }, constants.sendUpdateInterval_ms);
 
@@ -45,4 +50,7 @@ board
 
         return board.print();
     })
-    .then(() => {});
+    .then(() => {})
+    .catch((err) => {
+        console.log(`${err.stack ? err.stack : err}`);
+    });
